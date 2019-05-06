@@ -1,0 +1,6 @@
+spring:
+  cloud:
+    kubernetes:
+      reload:
+        enabled: true
+        mode: polling
