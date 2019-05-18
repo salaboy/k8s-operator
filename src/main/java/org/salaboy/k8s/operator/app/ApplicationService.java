@@ -73,7 +73,7 @@ public class ApplicationService {
      *  Then Load existing instances
      *  Then Register watches for our CRDs
      */
-    public boolean init() {
+    public boolean checkForRequiredCRDs() {
         try {
             KubernetesDeserializer.registerCustomKind(SERVICE_A_CRD_GROUP + "/v1", "ServiceA", ServiceA.class);
             KubernetesDeserializer.registerCustomKind(SERVICE_B_CRD_GROUP + "/v1", "ServiceB", ServiceB.class);
@@ -95,25 +95,34 @@ public class ApplicationService {
                     }
                 }
             }
-            if (!checkAllCRDsFound()) {
+            if (checkAllCRDsFound()) {
+                return true;
+            } else {
                 logger.error("> Custom CRDs required to work not found please check your installation!");
                 logger.error("\t > App CRD: " + applicationCRD);
                 logger.error("\t > ServiceA CRD: " + serviceACRD);
                 logger.error("\t > ServiceB CRD: " + serviceBCRD);
                 return false;
             }
-            // Creating CRDs Clients
-            appCRDClient = kubernetesClient.customResources(applicationCRD, Application.class, ApplicationList.class, DoneableApplication.class);
-            serviceACRDClient = kubernetesClient.customResources(serviceACRD, ServiceA.class, ServiceAList.class, DoneableServiceA.class);
-            serviceBCRDClient = kubernetesClient.customResources(serviceBCRD, ServiceB.class, ServiceBList.class, DoneableServiceB.class);
-
-            if (loadExistingResources() && watchOurCRDs()) {
-                return true;
-            }
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("> Init sequence not done");
         }
+        return false;
+    }
+
+    // Init can only be called if all the required CRDs are present
+    public boolean init() {
+        // Creating CRDs Clients
+        appCRDClient = kubernetesClient.customResources(applicationCRD, Application.class, ApplicationList.class, DoneableApplication.class);
+        serviceACRDClient = kubernetesClient.customResources(serviceACRD, ServiceA.class, ServiceAList.class, DoneableServiceA.class);
+        serviceBCRDClient = kubernetesClient.customResources(serviceBCRD, ServiceB.class, ServiceBList.class, DoneableServiceB.class);
+
+        if (loadExistingResources() && watchOurCRDs()) {
+            return true;
+        }
+
+
         return false;
 
     }

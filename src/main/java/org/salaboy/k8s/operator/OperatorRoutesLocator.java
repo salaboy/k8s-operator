@@ -14,6 +14,7 @@ import org.salaboy.k8s.operator.crds.serviceB.ServiceB;
 import org.salaboy.k8s.operator.crds.serviceB.ServiceBList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@RefreshScope
 public class OperatorRoutesLocator implements RouteDefinitionLocator {
 
     public static final String SERVICE_A_PATH = "a";
@@ -93,6 +95,7 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
         return false;
 
     }
+
     //@TODO: remove duplication
     private List<RouteDefinition> getServiceARoutesForApplication(Application app) {
 
@@ -113,7 +116,7 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
                 predicateDefinition.addArg("pattern", pattern);
                 routeDefinition.getPredicates().add(predicateDefinition);
                 routeDefinitions.add(routeDefinition);
-                logger.info("Route (id="+app.getMetadata().getName() + ":" + serviceA.getMetadata().getName()+") added: " + pattern);
+                logger.info("Route (id=" + app.getMetadata().getName() + ":" + serviceA.getMetadata().getName() + ") added: " + pattern);
             });
         }
         return routeDefinitions;
@@ -138,7 +141,7 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
                 predicateDefinition.addArg("pattern", pattern);
                 routeDefinition.getPredicates().add(predicateDefinition);
                 routeDefinitions.add(routeDefinition);
-                logger.info("Route (id="+app.getMetadata().getName() + ":" + serviceB.getMetadata().getName()+") added: " + pattern);
+                logger.info("Route (id=" + app.getMetadata().getName() + ":" + serviceB.getMetadata().getName() + ") added: " + pattern);
             });
         }
         return routeDefinitions;
