@@ -414,11 +414,10 @@ public class ApplicationService {
                 logger.info("> App Name: " + s + " is up and running");
                 //@TODO: if the app is up and running it should be represented in the CRD
                 application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
-
             } else {
                 logger.error("> App Name: " + s + " is down due missing services");
                 if (application.getSpec().getModules() == null || application.getSpec().getModules().isEmpty()) {
-                    logger.info("App: " + s + ": No Modules found. ")
+                    logger.info("App: " + s + ": No Modules found. ");
                 } else {
                     application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
                 }
