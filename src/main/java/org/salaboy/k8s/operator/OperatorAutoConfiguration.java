@@ -1,7 +1,7 @@
-package org.salaboy.jbcnconf.gateway;
+package org.salaboy.k8s.operator;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.salaboy.jbcnconf.gateway.app.ApplicationService;
+import org.salaboy.k8s.operator.app.ApplicationService;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.cloud.gateway.config.GatewayAutoConfiguration;
 import org.springframework.cloud.gateway.route.RouteDefinitionLocator;

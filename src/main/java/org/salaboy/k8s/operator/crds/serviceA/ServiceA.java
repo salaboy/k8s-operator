@@ -1,4 +1,4 @@
-package org.salaboy.jbcnconf.gateway.crds.query;
+package org.salaboy.k8s.operator.crds.serviceA;
 
 import io.fabric8.kubernetes.client.CustomResource;
 
@@ -15,7 +15,7 @@ public class ServiceA extends CustomResource {
 
     @Override
     public String toString() {
-        return "ServiceA{" +
+        return "ServiceB{" +
                 "name='" + getMetadata().getName() + '\'' +
                 ", spec=" + spec +
                 '}';

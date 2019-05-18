@@ -1,10 +1,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: gateway
+  name: k8s-operator
 spec:
   selector:
-    app: gateway
+    app: k8s-operator
   ports:
   - protocol: TCP
     port: 80

@@ -1,4 +1,4 @@
-package org.salaboy.jbcnconf.gateway.crds.query;
+package org.salaboy.k8s.operator.crds.serviceA;
 
 import io.fabric8.kubernetes.api.builder.Function;
 import io.fabric8.kubernetes.client.CustomResourceDoneable;

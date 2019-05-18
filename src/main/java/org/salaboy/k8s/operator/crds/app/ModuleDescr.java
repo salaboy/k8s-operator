@@ -1,4 +1,4 @@
-package org.salaboy.jbcnconf.gateway.crds.app;
+package org.salaboy.k8s.operator.crds.app;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonDeserializer;

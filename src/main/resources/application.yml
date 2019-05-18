@@ -1,5 +1,5 @@
 spring:
-  application.name: gateway
+  application.name: k8s-operator
   cloud:
     gateway:
       discovery:

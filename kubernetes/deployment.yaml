@@ -1,24 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gateway
+  name: k8s-operator
   labels:
-    app: gateway
+    app: k8s-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gateway
+      app: k8s-operator
   template:
     metadata:
       annotations:
         sidecar.istio.io/inject: "true"
       labels:
-        app: gateway
+        app: k8s-operator
     spec:
       containers:
-      - name: gateway
-        image: salaboy/gateway
+      - name: k8s-operator
+        image: salaboy/k8s-operator:0.0.1
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
-      serviceAccountName: gateway
+      serviceAccountName: k8s-operator

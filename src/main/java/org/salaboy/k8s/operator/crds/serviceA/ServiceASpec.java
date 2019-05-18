@@ -1,4 +1,4 @@
-package org.salaboy.jbcnconf.gateway.crds.query;
+package org.salaboy.k8s.operator.crds.serviceA;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -33,7 +33,7 @@ public class ServiceASpec implements KubernetesResource {
 
     @Override
     public String toString() {
-        return "ServiceASpec{" +
+        return "ServiceBSpec{" +
                 " serviceName='" + serviceName + '\'' +
                 ", serviceVersion='" + serviceVersion + '\'' +
                 '}';

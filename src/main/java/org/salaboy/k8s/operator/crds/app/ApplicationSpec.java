@@ -1,12 +1,10 @@
-package org.salaboy.jbcnconf.gateway.crds.app;
+package org.salaboy.k8s.operator.crds.app;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
-import org.salaboy.jbcnconf.gateway.crds.query.ServiceA;
 
-import java.util.List;
 import java.util.Set;
 
 @JsonDeserialize(

@@ -1,13 +1,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: gateway
-  namespace: knativetutorial
+  name: k8s-operator
+  namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: gateway
+  name: k8s-operator
 subjects:
 - kind: ServiceAccount
-  name: gateway
-  namespace: knativetutorial
+  name: k8s-operator
+  namespace: default
