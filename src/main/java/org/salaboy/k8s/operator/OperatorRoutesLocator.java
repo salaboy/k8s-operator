@@ -2,10 +2,7 @@ package org.salaboy.k8s.operator;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.salaboy.k8s.operator.app.ApplicationService;
-import org.salaboy.k8s.operator.crds.app.Application;
-import org.salaboy.k8s.operator.crds.app.ApplicationList;
-import org.salaboy.k8s.operator.crds.app.DoneableApplication;
-import org.salaboy.k8s.operator.crds.app.ModuleDescr;
+import org.salaboy.k8s.operator.crds.app.*;
 import org.salaboy.k8s.operator.crds.serviceA.DoneableServiceA;
 import org.salaboy.k8s.operator.crds.serviceA.ServiceA;
 import org.salaboy.k8s.operator.crds.serviceA.ServiceAList;
@@ -22,6 +19,7 @@ import reactor.core.publisher.Flux;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +49,6 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
                 List<Application> applications = kubernetesClient.customResources(applicationService.getApplicationCRD(), Application.class,
                         ApplicationList.class, DoneableApplication.class).list().getItems();
 
-
                 applications.forEach(app -> {
 
                     List<RouteDefinition> appRouteDefinitions = new ArrayList<RouteDefinition>();
@@ -80,46 +77,51 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
         Set<ModuleDescr> modules = app.getSpec().getModules();
         final AtomicInteger validated = new AtomicInteger();
         logger.info("> App: " + app.getMetadata().getName() + " validation!");
-        modules.forEach(md -> {
-            appRouteDefinitions.forEach(rd -> {
-                if (rd.getId().equals(app.getMetadata().getName() + ":" + md.getName())) {
-                    validated.incrementAndGet();
-                }
+        if(modules != null) {
+            modules.forEach(md -> {
+                appRouteDefinitions.forEach(rd -> {
+                    if (rd.getId().equals(app.getMetadata().getName() + ":" + md.getName())) {
+                        validated.incrementAndGet();
+                    }
+                });
             });
-        });
-        logger.info("> Modules size: " + modules.size() + " and validated: " + validated);
-        if (validated.get() == modules.size()) {
-            return true;
+            logger.info("> Modules size: " + modules.size() + " and validated: " + validated);
+            if (validated.get() == modules.size()) {
+                return true;
+            }
         }
 
         return false;
 
     }
 
-    //@TODO: remove duplication
-    private List<RouteDefinition> getServiceARoutesForApplication(Application app) {
-
+    private List<RouteDefinition> createRouteForServices(Application app, List<CustomService> resources, String path) {
         List<RouteDefinition> routeDefinitions = new ArrayList<RouteDefinition>();
+        resources.forEach(service -> {
+            RouteDefinition routeDefinition = new RouteDefinition();
+            routeDefinition.setId(app.getMetadata().getName() + ":" + service.getMetadata().getName());
+            routeDefinition.setUri(URI.create("http://" + service.getSpec().getServiceName()));
+
+            //@TODO: It will be nice to add into the HEADERS the application where the service belongs
+
+            PredicateDefinition predicateDefinition = new PredicateDefinition();
+            predicateDefinition.setName("Path");
+            String pattern = "/" + app.getMetadata().getName() + "/" + app.getSpec().getVersion() + "/" + path + "/" + service.getMetadata().getName() + "/**";
+            predicateDefinition.addArg("pattern", pattern);
+            routeDefinition.getPredicates().add(predicateDefinition);
+            routeDefinitions.add(routeDefinition);
+            logger.info("Route (id=" + app.getMetadata().getName() + ":" + service.getMetadata().getName() + ") added: " + pattern);
+        });
+        return routeDefinitions;
+    }
+
+    private List<RouteDefinition> getServiceARoutesForApplication(Application app) {
         if (applicationService.getServiceACRD() != null) {
             List<ServiceA> serviceAList = kubernetesClient.customResources(applicationService.getServiceACRD(), ServiceA.class,
                     ServiceAList.class, DoneableServiceA.class).list().getItems();
-            serviceAList.forEach(serviceA -> {
-                RouteDefinition routeDefinition = new RouteDefinition();
-                routeDefinition.setId(app.getMetadata().getName() + ":" + serviceA.getMetadata().getName());
-                routeDefinition.setUri(URI.create("http://" + serviceA.getSpec().getServiceName()));
-
-                //@TODO: It will be nice to add into the HEADERS the application where the service belongs
-
-                PredicateDefinition predicateDefinition = new PredicateDefinition();
-                predicateDefinition.setName("Path");
-                String pattern = "/" + app.getMetadata().getName() + "/" + app.getSpec().getVersion() + "/" + SERVICE_A_PATH + "/" + serviceA.getMetadata().getName() + "/**";
-                predicateDefinition.addArg("pattern", pattern);
-                routeDefinition.getPredicates().add(predicateDefinition);
-                routeDefinitions.add(routeDefinition);
-                logger.info("Route (id=" + app.getMetadata().getName() + ":" + serviceA.getMetadata().getName() + ") added: " + pattern);
-            });
+            return createRouteForServices(app, new ArrayList<>(serviceAList), SERVICE_A_PATH);
         }
-        return routeDefinitions;
+        return Collections.EMPTY_LIST;
     }
 
     private List<RouteDefinition> getServiceBRoutesForApplication(Application app) {
@@ -128,23 +130,9 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
         if (applicationService.getServiceBCRD() != null) {
             List<ServiceB> serviceBList = kubernetesClient.customResources(applicationService.getServiceBCRD(), ServiceB.class,
                     ServiceBList.class, DoneableServiceB.class).list().getItems();
-            serviceBList.forEach(serviceB -> {
-                RouteDefinition routeDefinition = new RouteDefinition();
-                routeDefinition.setId(app.getMetadata().getName() + ":" + serviceB.getMetadata().getName());
-                routeDefinition.setUri(URI.create("http://" + serviceB.getSpec().getServiceName()));
-
-                //@TODO: It will be nice to add into the HEADERS the application where the service belongs
-
-                PredicateDefinition predicateDefinition = new PredicateDefinition();
-                predicateDefinition.setName("Path");
-                String pattern = "/" + app.getMetadata().getName() + "/" + app.getSpec().getVersion() + "/" + SERVICE_B_PATH + "/" + serviceB.getMetadata().getName() + "/**";
-                predicateDefinition.addArg("pattern", pattern);
-                routeDefinition.getPredicates().add(predicateDefinition);
-                routeDefinitions.add(routeDefinition);
-                logger.info("Route (id=" + app.getMetadata().getName() + ":" + serviceB.getMetadata().getName() + ") added: " + pattern);
-            });
+            return createRouteForServices(app, new ArrayList<>(serviceBList), SERVICE_B_PATH);
         }
-        return routeDefinitions;
+        return Collections.EMPTY_LIST;
     }
 
 

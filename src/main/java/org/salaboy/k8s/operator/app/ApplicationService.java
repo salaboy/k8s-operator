@@ -178,6 +178,7 @@ public class ApplicationService {
             });
 
         }
+        //@TODO: remove duplication between services
         List<ServiceA> serviceAList = serviceACRDClient.list().getItems();
         if (!serviceAList.isEmpty()) {
             serviceAsResourceVersion = serviceAList.get(0).getMetadata().getResourceVersion();
@@ -186,16 +187,21 @@ public class ApplicationService {
                 String appName = serviceA.getMetadata().getLabels().get("app");
                 if (appName != null && !appName.isEmpty()) {
                     Application application = apps.get(appName);
-                    ApplicationSpec spec = application.getSpec();
-                    Set<ModuleDescr> modules = spec.getModules();
-                    if (modules == null) {
-                        modules = new HashSet<>();
+                    if (application != null) {
+                        ApplicationSpec spec = application.getSpec();
+                        Set<ModuleDescr> modules = spec.getModules();
+                        if (modules == null) {
+                            modules = new HashSet<>();
+                        }
+                        //@TODO: i should check that the k8s service exist before adding the module
+                        //@TODO: i should check that the k8s deployment exist before adding the module
+                        //@TODO: i should update the k8s deployment to make sure that services are configured for the app
+                        modules.add(new ModuleDescr(serviceA.getMetadata().getName(), "ServiceA", serviceA.getSpec().getServiceName()));
+                        spec.setModules(modules);
+                        application.setSpec(spec);
+                        apps.put(application.getMetadata().getName(), application);
+                        logger.info("> Application: " + appName + " updated with ServiceA " + serviceA.getMetadata().getName());
                     }
-                    modules.add(new ModuleDescr(serviceA.getMetadata().getName(), "ServiceA"));
-                    spec.setModules(modules);
-                    application.setSpec(spec);
-                    appCRDClient.createOrReplace(application);
-                    logger.info("> Application: " + appName + " updated with ServiceA " + serviceA.getMetadata().getName());
                 } else {
                     logger.error("> Orphan ServiceA: " + serviceA.getMetadata().getName());
                 }
@@ -209,24 +215,35 @@ public class ApplicationService {
                 String appName = serviceB.getMetadata().getLabels().get("app");
                 if (appName != null && !appName.isEmpty()) {
                     Application application = apps.get(appName);
-                    ApplicationSpec spec = application.getSpec();
-                    Set<ModuleDescr> modules = spec.getModules();
-                    if (modules == null) {
-                        modules = new HashSet<>();
+                    if (application != null) {
+                        ApplicationSpec spec = application.getSpec();
+                        Set<ModuleDescr> modules = spec.getModules();
+                        if (modules == null) {
+                            modules = new HashSet<>();
+                        }
+                        //@TODO: i should check that the k8s service exist before adding the module
+                        //@TODO: i should check that the k8s deployment exist before adding the module
+                        //@TODO: i should update the k8s deployment to make sure that services are configured for the app
+                        modules.add(new ModuleDescr(serviceB.getMetadata().getName(), "ServiceB", serviceB.getSpec().getServiceName()));
+                        spec.setModules(modules);
+                        application.setSpec(spec);
+                        apps.put(application.getMetadata().getName(), application);
+                        logger.info("> Application: " + appName + " updated with ServiceB " + serviceB.getMetadata().getName());
                     }
-                    modules.add(new ModuleDescr(serviceB.getMetadata().getName(), "ServiceB"));
-                    spec.setModules(modules);
-                    application.setSpec(spec);
-                    appCRDClient.createOrReplace(application);
-                    logger.info("> Application: " + appName + " updated with ServiceB " + serviceB.getMetadata().getName());
                 } else {
                     logger.error("> Orphan ServiceB: " + serviceB.getMetadata().getName());
                 }
             });
+
         }
 
         return true;
 
+    }
+
+    private boolean validateK8sService(String serviceName) {
+        // kubernetesClient.services().withLabel()
+        return false;
     }
 
     /*
@@ -249,7 +266,7 @@ public class ApplicationService {
             @Override
             public void eventReceived(Watcher.Action action, Application application) {
                 System.out.println("==> " + action + " for " + application);
-                if (action.equals(Action.ADDED) || action.equals(Action.MODIFIED)) {
+                if (action.equals(Action.ADDED)) {
                     System.out.println(">> Adding a new App");
                     apps.put(application.getMetadata().getName(), application);
                     List<ServiceA> serviceAForAppList = serviceACRDClient.withLabel("app", application.getMetadata().getName()).list().getItems();
@@ -260,11 +277,26 @@ public class ApplicationService {
                             if (modules == null) {
                                 modules = new HashSet<>();
                             }
-                            modules.add(new ModuleDescr(serviceA.getMetadata().getName(), "ServiceA"));
+                            modules.add(new ModuleDescr(serviceA.getMetadata().getName(), "ServiceA", serviceA.getSpec().getServiceName()));
                             spec.setModules(modules);
                             application.setSpec(spec);
-                            appCRDClient.createOrReplace(application);
+                            apps.put(application.getMetadata().getName(), application);
                             logger.info("> Application: " + application.getMetadata().getName() + " updated with ServiceA " + serviceA.getMetadata().getName());
+                        });
+                    }
+                    List<ServiceB> serviceBForAppList = serviceBCRDClient.withLabel("app", application.getMetadata().getName()).list().getItems();
+                    if (serviceBForAppList != null && !serviceBForAppList.isEmpty()) {
+                        serviceBForAppList.forEach(serviceB -> {
+                            ApplicationSpec spec = application.getSpec();
+                            Set<ModuleDescr> modules = spec.getModules();
+                            if (modules == null) {
+                                modules = new HashSet<>();
+                            }
+                            modules.add(new ModuleDescr(serviceB.getMetadata().getName(), "ServiceB", serviceB.getSpec().getServiceName()));
+                            spec.setModules(modules);
+                            application.setSpec(spec);
+                            apps.put(application.getMetadata().getName(), application);
+                            logger.info("> Application: " + application.getMetadata().getName() + " updated with ServiceB " + serviceB.getMetadata().getName());
                         });
                     }
                 }
@@ -307,10 +339,10 @@ public class ApplicationService {
                                 modules = new HashSet<>();
                             }
 
-                            modules.add(new ModuleDescr(serviceA.getMetadata().getName(), "ServiceA"));
+                            modules.add(new ModuleDescr(serviceA.getMetadata().getName(), "ServiceA", serviceA.getSpec().getServiceName()));
                             spec.setModules(modules);
                             application.setSpec(spec);
-                            appCRDClient.createOrReplace(application);
+                            apps.put(application.getMetadata().getName(), application);
                             logger.info(">> Added ServiceA " + serviceA.getMetadata().getName() + " to app " + appName);
                         }
                     }
@@ -329,7 +361,7 @@ public class ApplicationService {
                             modules.removeIf(m -> m.getKind().equals("ServiceA") && m.getName().equals(serviceA.getMetadata().getName()));
                             spec.setModules(modules);
                             application.setSpec(spec);
-                            appCRDClient.createOrReplace(application);
+                            apps.put(application.getMetadata().getName(), application);
                             logger.info(">> Deleted ServiceA " + serviceA.getMetadata().getName() + " from app " + appName);
                         }
                     }
@@ -368,10 +400,10 @@ public class ApplicationService {
                                 modules = new HashSet<>();
                             }
 
-                            modules.add(new ModuleDescr(serviceB.getMetadata().getName(), "ServiceB"));
+                            modules.add(new ModuleDescr(serviceB.getMetadata().getName(), "ServiceB", serviceB.getSpec().getServiceName()));
                             spec.setModules(modules);
                             application.setSpec(spec);
-                            appCRDClient.createOrReplace(application);
+                            apps.put(application.getMetadata().getName(), application);
                             logger.info(">> Added ServiceB " + serviceB.getMetadata().getName() + " to app " + appName);
                         }
                     }
@@ -390,7 +422,7 @@ public class ApplicationService {
                             modules.removeIf(m -> m.getKind().equals("ServiceB") && m.getName().equals(serviceB.getMetadata().getName()));
                             spec.setModules(modules);
                             application.setSpec(spec);
-                            appCRDClient.createOrReplace(application);
+                            apps.put(application.getMetadata().getName(), application);
                             logger.info(">> Deleted ServiceB " + serviceB.getMetadata().getName() + " from app " + appName);
                         }
                     }
@@ -417,6 +449,8 @@ public class ApplicationService {
         if (apps.isEmpty()) {
             logger.info("> No Apps found.");
         }
+        apps.keySet().forEach(appName -> appCRDClient.createOrReplace(apps.get(appName)));
+
         apps.forEach((s, application) -> {
             logger.info("> Scanning App: " + s);
             if (checkApplicationStatus(application)) {

@@ -18,6 +18,7 @@ public class ApplicationSpec implements KubernetesResource {
 
     private Set<ModuleDescr> modules;
 
+
     public String getVersion() {
         return version;
     }

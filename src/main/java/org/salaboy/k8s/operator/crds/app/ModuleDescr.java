@@ -13,13 +13,15 @@ import java.util.Objects;
 public class ModuleDescr {
     private String name;
     private String kind;
+    private String serviceName;
 
     public ModuleDescr() {
     }
 
-    public ModuleDescr(String name, String kind) {
+    public ModuleDescr(String name, String kind, String serviceName) {
         this.name = name;
         this.kind = kind;
+        this.serviceName = serviceName;
     }
 
     public String getName() {
@@ -38,12 +40,26 @@ public class ModuleDescr {
         this.kind = kind;
     }
 
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
     @Override
     public String toString() {
         return "ModuleDescr{" +
                 "name='" + name + '\'' +
                 ", kind='" + kind + '\'' +
+                ", serviceName='" + serviceName + '\'' +
                 '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, kind);
     }
 
     @Override
@@ -52,11 +68,7 @@ public class ModuleDescr {
         if (o == null || getClass() != o.getClass()) return false;
         ModuleDescr that = (ModuleDescr) o;
         return Objects.equals(name, that.name) &&
-                Objects.equals(kind, that.kind);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, kind);
+                Objects.equals(kind, that.kind) &&
+                Objects.equals(serviceName, that.serviceName);
     }
 }

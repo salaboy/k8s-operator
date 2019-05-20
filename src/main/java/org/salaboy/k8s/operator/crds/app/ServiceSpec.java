@@ -1,4 +1,4 @@
-package org.salaboy.k8s.operator.crds.serviceA;
+package org.salaboy.k8s.operator.crds.app;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -9,7 +9,7 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
         using = JsonDeserializer.None.class
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ServiceASpec implements KubernetesResource {
+public class ServiceSpec implements KubernetesResource {
 
     private String serviceName;
     private String serviceVersion;
@@ -33,7 +33,7 @@ public class ServiceASpec implements KubernetesResource {
 
     @Override
     public String toString() {
-        return "ServiceBSpec{" +
+        return "ServiceSpec{" +
                 " serviceName='" + serviceName + '\'' +
                 ", serviceVersion='" + serviceVersion + '\'' +
                 '}';
