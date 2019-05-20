@@ -449,25 +449,25 @@ public class ApplicationService {
         if (apps.isEmpty()) {
             logger.info("> No Apps found.");
         }
-        apps.keySet().forEach(appName -> appCRDClient.createOrReplace(apps.get(appName)));
-
-        apps.forEach((s, application) -> {
-            logger.info("> Scanning App: " + s);
-            if (checkApplicationStatus(application)) {
-                logger.info("> App Name: " + s + " is up and running");
-                //@TODO: if the app is up and running it should be represented in the CRD
-                application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
-            } else {
-                logger.error("> App Name: " + s + " is down due missing services");
-                if (application.getSpec().getModules() == null || application.getSpec().getModules().isEmpty()) {
-                    logger.info("App: " + s + ": No Modules found. ");
-                } else {
-                    application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
+        apps.keySet().forEach(appName ->
+                {
+                    Application application = apps.get(appName);
+                    if (checkApplicationStatus(application)) {
+                        logger.info("> App Name: " + appName + " is up and running");
+                        application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
+                        application.setStatus("UP");
+                    } else {
+                        logger.error("> App Name: " + appName + " is down due missing services");
+                        if (application.getSpec().getModules() == null || application.getSpec().getModules().isEmpty()) {
+                            logger.info("App: " + appName + ": No Modules found. ");
+                        } else {
+                            application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
+                        }
+                        application.setStatus("DOWN");
+                    }
+                    appCRDClient.createOrReplace(application);
                 }
-            }
-
-
-        });
+        );
 
     }
 
