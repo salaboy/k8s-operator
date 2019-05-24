@@ -23,6 +23,10 @@ public class ServiceB extends CustomResource implements CustomService {
         this.spec = spec;
     }
 
+    public String getKind() {
+        return "ServiceB";
+    }
+
     @Override
     public String toString() {
         return "ServiceB{" +

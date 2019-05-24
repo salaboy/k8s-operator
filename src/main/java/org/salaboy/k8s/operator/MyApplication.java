@@ -1,6 +1,6 @@
 package org.salaboy.k8s.operator;
 
-import org.salaboy.k8s.operator.app.ApplicationService;
+import org.salaboy.k8s.operator.app.AppService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +21,17 @@ import java.util.Collection;
 @SpringBootApplication
 @EnableScheduling
 @RestController
-public class OperatorApplication implements CommandLineRunner {
-    Logger logger = LoggerFactory.getLogger(OperatorApplication.class);
+public class MyApplication implements CommandLineRunner {
+    Logger logger = LoggerFactory.getLogger(MyApplication.class);
 
     @Autowired
     private DiscoveryClient discoveryClient;
 
     @Autowired
-    private ApplicationService appService;
+    private AppsOperator appsOperator;
+
+    @Autowired
+    private AppService applicationsService;
 
     // Is the service On?
     private boolean on = true;
@@ -37,35 +40,33 @@ public class OperatorApplication implements CommandLineRunner {
     private boolean crdsFound = false;
 
     public static void main(String[] args) {
-        SpringApplication.run(OperatorApplication.class,
+        SpringApplication.run(MyApplication.class,
                 args);
     }
 
 
     @Override
     public void run(String... args) throws Exception {
-        crdsFound = appService.checkForRequiredCRDs();
-        if(crdsFound) {
-            initDone = appService.init();
+        crdsFound = appsOperator.areRequiredCRDsPresent();
+        if (crdsFound) {
+            initDone = appsOperator.init();
             logger.info("> App Service Init.");
         }
 
     }
 
-    // @TODO: manage CRD status for Application .. make sure that when an application is down it is removed from the app list
-
     @GetMapping("/")
     public Collection<String> appList() {
-        return appService.getApps();
+        return applicationsService.getApps();
     }
 
     @PostMapping
     public void turnOnOff() {
         on = !on;
-        if(on){
-            crdsFound = appService.checkForRequiredCRDs();
-            if(crdsFound) {
-                initDone = appService.init();
+        if (on) {
+            crdsFound = appsOperator.areRequiredCRDsPresent();
+            if (crdsFound) {
+                initDone = appsOperator.init();
                 logger.info("> App Service Init.");
             }
         }
@@ -77,6 +78,23 @@ public class OperatorApplication implements CommandLineRunner {
         return String.valueOf(on);
     }
 
+    @Scheduled(fixedDelay = 10000)
+    public void reconcileLoop() {
+        if (on) {
+            if (initDone) {
+                logger.info("+ --------------------- RECONCILE LOOP ----------------------------- \n+ ");
+                appsOperator.reconcile();
+                logger.info("+ --------------------- END RECONCILE  ----------------------------- \n+ ");
+
+            } else {
+                crdsFound = appsOperator.areRequiredCRDsPresent();
+                if (crdsFound) {
+                    initDone = appsOperator.init();
+                    logger.info("> App Service Init.");
+                }
+            }
+        }
+    }
 
     //        System.out.println(" -------------------------- ");
 //
@@ -110,21 +128,5 @@ public class OperatorApplication implements CommandLineRunner {
 //                .bodyToMono(String.class).subscribe(System.out::print);
 //
 //    }
-
-    @Scheduled(fixedDelay = 10000)
-    public void reconcileLoop() {
-        if (on) {
-            if (initDone) {
-                logger.info("> Reconciling Apps ...");
-                appService.reconcile();
-            }else{
-                crdsFound = appService.checkForRequiredCRDs();
-                if(crdsFound) {
-                    initDone = appService.init();
-                    logger.info("> App Service Init.");
-                }
-            }
-        }
-    }
 
 }

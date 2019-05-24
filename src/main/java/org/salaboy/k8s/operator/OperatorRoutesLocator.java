@@ -1,7 +1,10 @@
 package org.salaboy.k8s.operator;
 
+import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.salaboy.k8s.operator.app.ApplicationService;
+import org.salaboy.k8s.operator.app.AppService;
 import org.salaboy.k8s.operator.crds.app.*;
 import org.salaboy.k8s.operator.crds.serviceA.DoneableServiceA;
 import org.salaboy.k8s.operator.crds.serviceA.ServiceA;
@@ -32,38 +35,47 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
     private Logger logger = LoggerFactory.getLogger(OperatorRoutesLocator.class);
 
 
-    private ApplicationService applicationService;
+    private AppsOperator appsOperator;
+
+    private AppService appService;
 
     private KubernetesClient kubernetesClient;
 
-    public OperatorRoutesLocator(ApplicationService applicationService, KubernetesClient kubernetesClient) {
-        this.applicationService = applicationService;
+
+    public OperatorRoutesLocator(AppsOperator appsOperator,
+                                 AppService appService,
+                                 KubernetesClient kubernetesClient) {
+        this.appsOperator = appsOperator;
+        this.appService = appService;
         this.kubernetesClient = kubernetesClient;
+
     }
 
     @Override
     public Flux<RouteDefinition> getRouteDefinitions() {
         try {
             List<RouteDefinition> allRouteDefinitions = new ArrayList<RouteDefinition>();
-            if (applicationService.getApplicationCRD() != null) {
-                List<Application> applications = kubernetesClient.customResources(applicationService.getApplicationCRD(), Application.class,
+            if (appsOperator.getApplicationCRD() != null) {
+                List<Application> applications = kubernetesClient.customResources(appsOperator.getApplicationCRD(), Application.class,
                         ApplicationList.class, DoneableApplication.class).list().getItems();
 
                 applications.forEach(app -> {
-
+                    //@TODO: read from virtual services from istio
+                    String externalIp = findGatewayExternalIP();
+                    appService.addAppUrl(app.getMetadata().getName(), "http://" + externalIp + "/apps/" + app.getMetadata().getName() + "/");
                     List<RouteDefinition> appRouteDefinitions = new ArrayList<RouteDefinition>();
                     List<RouteDefinition> serviceARoutes = getServiceARoutesForApplication(app);
                     appRouteDefinitions.addAll(serviceARoutes);
                     List<RouteDefinition> serviceBRoutes = getServiceBRoutesForApplication(app);
                     appRouteDefinitions.addAll(serviceBRoutes);
 
-                    if (isApplicationReady(app, appRouteDefinitions)) { // if all the routes for the app are available add to main routes
+                    if (areApplicationRoutesReady(app, appRouteDefinitions)) { // if all the routes for the app are available add to main routes
                         allRouteDefinitions.addAll(appRouteDefinitions);
                     }
                 });
             }
 
-
+            //@TODO: i need to remove routes old routes ?????
             return Flux.fromIterable(allRouteDefinitions);
         } catch (Exception e) {
             e.printStackTrace();
@@ -72,22 +84,38 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
         return null;
     }
 
+    private String findGatewayExternalIP() {
+        String externalIP = "N/A";
+        ServiceList list = kubernetesClient.services().inNamespace("istio-system").list();
+        for (Service s : list.getItems()) {
+            if (s.getMetadata().getName().equals("istio-ingressgateway")) {
+                List<LoadBalancerIngress> ingress = s.getStatus().getLoadBalancer().getIngress();
+                if (ingress.size() == 1) {
+                    externalIP = ingress.get(0).getIp();
+                }
+            }
+        }
+        return externalIP;
+    }
+
     //@TODO: improve routes and modules validation
-    private boolean isApplicationReady(Application app, List<RouteDefinition> appRouteDefinitions) {
-        Set<ModuleDescr> modules = app.getSpec().getModules();
+    private boolean areApplicationRoutesReady(Application app, List<RouteDefinition> appRouteDefinitions) {
         final AtomicInteger validated = new AtomicInteger();
-        logger.info("> App: " + app.getMetadata().getName() + " validation!");
-        if(modules != null) {
-            modules.forEach(md -> {
-                appRouteDefinitions.forEach(rd -> {
-                    if (rd.getId().equals(app.getMetadata().getName() + ":" + md.getName())) {
-                        validated.incrementAndGet();
-                    }
+        if (appService.isAppUp(app)) { // ALL the modules are present
+            logger.info("> App: " + app.getMetadata().getName() + " validation!");
+            Set<ModuleDescr> modules = app.getSpec().getModules();
+            if (modules != null) {
+                modules.forEach(md -> {
+                    appRouteDefinitions.forEach(rd -> {
+                        if (rd.getId().equals(app.getMetadata().getName() + ":" + md.getName())) {
+                            validated.incrementAndGet();
+                        }
+                    });
                 });
-            });
-            logger.info("> Modules size: " + modules.size() + " and validated: " + validated);
-            if (validated.get() == modules.size()) {
-                return true;
+                logger.info("> Modules size: " + modules.size() + " and validated: " + validated);
+                if (validated.get() == modules.size()) {
+                    return true;
+                }
             }
         }
 
@@ -116,8 +144,8 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
     }
 
     private List<RouteDefinition> getServiceARoutesForApplication(Application app) {
-        if (applicationService.getServiceACRD() != null) {
-            List<ServiceA> serviceAList = kubernetesClient.customResources(applicationService.getServiceACRD(), ServiceA.class,
+        if (appsOperator.getServiceACRD() != null) {
+            List<ServiceA> serviceAList = kubernetesClient.customResources(appsOperator.getServiceACRD(), ServiceA.class,
                     ServiceAList.class, DoneableServiceA.class).list().getItems();
             return createRouteForServices(app, new ArrayList<>(serviceAList), SERVICE_A_PATH);
         }
@@ -127,8 +155,8 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
     private List<RouteDefinition> getServiceBRoutesForApplication(Application app) {
 
         List<RouteDefinition> routeDefinitions = new ArrayList<RouteDefinition>();
-        if (applicationService.getServiceBCRD() != null) {
-            List<ServiceB> serviceBList = kubernetesClient.customResources(applicationService.getServiceBCRD(), ServiceB.class,
+        if (appsOperator.getServiceBCRD() != null) {
+            List<ServiceB> serviceBList = kubernetesClient.customResources(appsOperator.getServiceBCRD(), ServiceB.class,
                     ServiceBList.class, DoneableServiceB.class).list().getItems();
             return createRouteForServices(app, new ArrayList<>(serviceBList), SERVICE_B_PATH);
         }

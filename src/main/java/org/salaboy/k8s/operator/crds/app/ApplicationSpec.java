@@ -18,6 +18,9 @@ public class ApplicationSpec implements KubernetesResource {
 
     private Set<ModuleDescr> modules;
 
+    private String status = "UNKNOWN";
+
+    private String url = "NO URL YET.";
 
     public String getVersion() {
         return version;
@@ -43,12 +46,30 @@ public class ApplicationSpec implements KubernetesResource {
         this.modules = modules;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     @Override
     public String toString() {
         return "ApplicationSpec{" +
                 "version='" + version + '\'' +
                 ", selector='" + selector + '\'' +
                 ", modules=" + modules +
+                ", status='" + status + '\'' +
+                ", url='" + url + '\'' +
                 '}';
     }
 }

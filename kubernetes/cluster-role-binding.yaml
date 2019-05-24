@@ -11,3 +11,6 @@ subjects:
 - kind: ServiceAccount
   name: k8s-operator
   namespace: default
+- kind: ServiceAccount
+  name: k8s-operator
+  namespace: istio-system
