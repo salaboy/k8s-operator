@@ -313,26 +313,29 @@ public class AppsOperator {
         // For each App Desired State
         appService.getAppsMap().keySet().forEach(appName ->
                 {
-                    Application application = appService.getApp(appName);
-                    if (appService.isAppUp(application)) {
+                    Application app = appService.getApp(appName);
+                    if (appService.isAppUp(app)) {
                         logger.info("> App Name: " + appName + " is up and running");
-                        application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
-                        application.getSpec().setStatus("HEALTHY");
-                        application.getSpec().setUrl(appService.getAppUrl(appName));
-                        logger.info("> App Name: " + appName + " status is UP. \n" + application);
+                        app.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
+                        app.getSpec().setStatus("HEALTHY");
+                        String externalIp = k8SCoreRuntime.findGatewayExternalIP();
+                        appService.addAppUrl(app.getMetadata().getName(), "http://" + externalIp + "/apps/" + app.getMetadata().getName() + "/");
+
+                        app.getSpec().setUrl(appService.getAppUrl(appName));
+                        logger.info("> App Name: " + appName + " status is UP. \n" + app);
                     } else {
                         logger.error("> App Name: " + appName + " is down due missing services");
-                        if (application.getSpec().getModules() == null || application.getSpec().getModules().isEmpty()) {
-                            logger.info("App: " + appName + ": No Modules found. " + application);
+                        if (app.getSpec().getModules() == null || app.getSpec().getModules().isEmpty()) {
+                            logger.info("App: " + appName + ": No Modules found. " + app);
                         } else {
-                            application.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
+                            app.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
                         }
-                        application.getSpec().setStatus("UNHEALTHY");
-                        application.getSpec().setUrl("N/A");
-                        logger.info("> App Name: " + appName + " status is DOWN. \n " + application);
+                        app.getSpec().setStatus("UNHEALTHY");
+                        app.getSpec().setUrl("N/A");
+                        logger.info("> App Name: " + appName + " status is DOWN. \n " + app);
                     }
 
-                    appCRDClient.createOrReplace(application);
+                    appCRDClient.createOrReplace(app);
                 }
         );
 

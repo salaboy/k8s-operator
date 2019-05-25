@@ -61,8 +61,7 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
 
                 applications.forEach(app -> {
                     //@TODO: read from virtual services from istio
-                    String externalIp = findGatewayExternalIP();
-                    appService.addAppUrl(app.getMetadata().getName(), "http://" + externalIp + "/apps/" + app.getMetadata().getName() + "/");
+
                     List<RouteDefinition> appRouteDefinitions = new ArrayList<RouteDefinition>();
                     List<RouteDefinition> serviceARoutes = getServiceARoutesForApplication(app);
                     appRouteDefinitions.addAll(serviceARoutes);
@@ -84,19 +83,7 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
         return null;
     }
 
-    private String findGatewayExternalIP() {
-        String externalIP = "N/A";
-        ServiceList list = kubernetesClient.services().inNamespace("istio-system").list();
-        for (Service s : list.getItems()) {
-            if (s.getMetadata().getName().equals("istio-ingressgateway")) {
-                List<LoadBalancerIngress> ingress = s.getStatus().getLoadBalancer().getIngress();
-                if (ingress.size() == 1) {
-                    externalIP = ingress.get(0).getIp();
-                }
-            }
-        }
-        return externalIP;
-    }
+
 
     //@TODO: improve routes and modules validation
     private boolean areApplicationRoutesReady(Application app, List<RouteDefinition> appRouteDefinitions) {
