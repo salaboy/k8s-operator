@@ -30,13 +30,7 @@ public class AppService {
         Set<ModuleDescr> modules = app.getSpec().getModules();
         if (modules != null) {
             ModuleDescr serviceAModuleDescr = modules.stream().filter(m -> m.getKind().equals("ServiceA")).findAny().orElse(null);
-            if (serviceAModuleDescr != null && !k8SCoreRuntime.isServiceAvailable(serviceAModuleDescr.getServiceName())) {
-                serviceAModuleDescr = null;
-            }
             ModuleDescr serviceBModuleDescr = modules.stream().filter(m -> m.getKind().equals("ServiceB")).findAny().orElse(null);
-            if (serviceBModuleDescr != null && !k8SCoreRuntime.isServiceAvailable(serviceBModuleDescr.getServiceName())) {
-                serviceBModuleDescr = null;
-            }
             if (serviceAModuleDescr != null && serviceBModuleDescr != null) {
                 return true;
             }
@@ -54,15 +48,12 @@ public class AppService {
                 if (modules == null) {
                     modules = new HashSet<>();
                 }
-                if (k8SCoreRuntime.isServiceAvailable(service.getSpec().getServiceName())) {
-                    modules.add(new ModuleDescr(service.getMetadata().getName(), service.getKind(), service.getSpec().getServiceName()));
-                    spec.setModules(modules);
-                    application.setSpec(spec);
-                    apps.put(application.getMetadata().getName(), application);
-                    logger.info("> Application: " + appName + " updated with Service " + service.getMetadata().getName());
-                } else {
-                    logger.error("Service:  service: " + service.getSpec().getServiceName() + " doesn't exist. ");
-                }
+                modules.add(new ModuleDescr(service.getMetadata().getName(), service.getKind(), service.getSpec().getServiceName()));
+                spec.setModules(modules);
+                application.setSpec(spec);
+                apps.put(application.getMetadata().getName(), application);
+                logger.info("> Application: " + appName + " updated with Service " + service.getMetadata().getName());
+
             }
         } else {
             logger.error("> Orphan Service: " + service.getMetadata().getName());

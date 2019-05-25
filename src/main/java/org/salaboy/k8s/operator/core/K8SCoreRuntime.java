@@ -31,19 +31,6 @@ public class K8SCoreRuntime {
         KubernetesDeserializer.registerCustomKind(apiVersion, kind, clazz);
     }
 
-    public boolean isServiceAvailable(String serviceName) {
-        //@TODO: i should check that the k8s deployment exist before adding the module
-        //@TODO: i should update the k8s deployment to make sure that services are configured for the app
-        io.fabric8.kubernetes.api.model.Service service = kubernetesClient.services().withName(serviceName).get();
-        if (service != null) {
-            logger.debug(">> K8s Service " + serviceName + " found.");
-            return true;
-        }
-        logger.error(">> K8s Service " + serviceName + " not found.");
-        return false;
-
-    }
-
     public CustomResourceDefinitionList getCustomResourceDefinitionList() {
         return kubernetesClient.customResourceDefinitions().list();
     }
