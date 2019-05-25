@@ -30,7 +30,8 @@ public class MyApplication {
     public void printDiscoveredServices() {
         logger.info("> Discovered Services. ");
         List<String> services = discoveryClient.getServices();
-        services.forEach(s -> logger.info("\t > Discovered Service: " + s));
+        services.forEach(s -> logger.info("\t > Discovered Service: " + s + ""));
+        logger.info("\n\n\n\n");
     }
 
 }
