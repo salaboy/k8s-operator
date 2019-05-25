@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: k8s-operator
-        image: salaboy/k8s-operator:0.0.1
+        image: salaboy/k8s-operator:controller
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
