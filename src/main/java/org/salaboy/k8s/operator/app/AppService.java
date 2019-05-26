@@ -26,7 +26,7 @@ public class AppService {
     /*
      * Add the logic to define what are the rules for your application to be UP or DOWN
      */
-    public boolean isAppUp(Application app) {
+    public boolean isAppHealthy(Application app) {
         Set<ModuleDescr> modules = app.getSpec().getModules();
         if (modules != null) {
             ModuleDescr serviceAModuleDescr = modules.stream().filter(m -> m.getKind().equals("ServiceA")).findAny().orElse(null);
@@ -82,7 +82,7 @@ public class AppService {
 
     public List<String> getApps() {
         return apps.values().stream()
-                .filter(app -> isAppUp(app))
+                .filter(app -> isAppHealthy(app))
                 .map(a -> a.getMetadata().getName())
                 .collect(Collectors.toList());
     }

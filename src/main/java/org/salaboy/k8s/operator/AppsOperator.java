@@ -314,8 +314,7 @@ public class AppsOperator {
                 {
                     Application app = appService.getApp(appName);
                     logger.info("> Scanning App: " + appName + "...");
-                    if (appService.isAppUp(app)) {
-
+                    if (appService.isAppHealthy(app)) {
                         app.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
                         app.getSpec().setStatus("HEALTHY");
                         String externalIp = k8SCoreRuntime.findGatewayExternalIP();
