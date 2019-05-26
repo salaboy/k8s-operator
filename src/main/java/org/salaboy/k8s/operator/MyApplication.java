@@ -82,9 +82,9 @@ public class MyApplication implements CommandLineRunner {
     public void reconcileLoop() {
         if (on) {
             if (initDone) {
-                logger.info("+ --------------------- RECONCILE LOOP ----------------------------- \n+ ");
+                logger.info("+ --------------------- RECONCILE LOOP -------------------- \n+ ");
                 appsOperator.reconcile();
-                logger.info("+ --------------------- END RECONCILE  ----------------------------- \n+ ");
+                logger.info("+ --------------------- END RECONCILE  -------------------- \n+ ");
 
             } else {
                 crdsFound = appsOperator.areRequiredCRDsPresent();
