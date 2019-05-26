@@ -82,9 +82,9 @@ public class MyApplication implements CommandLineRunner {
     public void reconcileLoop() {
         if (on) {
             if (initDone) {
-                logger.info("+ --------------------- RECONCILE LOOP -------------------- \n+ ");
+                logger.info("+ --------------------- RECONCILE LOOP -------------------- + ");
                 appsOperator.reconcile();
-                logger.info("+ --------------------- END RECONCILE  -------------------- \n+ ");
+                logger.info("+ --------------------- END RECONCILE  -------------------- +\n\n\n ");
 
             } else {
                 crdsFound = appsOperator.areRequiredCRDsPresent();
@@ -95,38 +95,5 @@ public class MyApplication implements CommandLineRunner {
             }
         }
     }
-
-    //        System.out.println(" -------------------------- ");
-//
-//        List<String> services = discoveryClient.getServices();
-//        services.forEach((s) -> System.out.println("> Service: " + s));
-//
-//        System.out.println(" -------------------------- ");
-//
-//        CustomResourceDefinitionList crdList = kubernetesClient.customResourceDefinitions().list();
-//        crdList.getItems().forEach((crd) -> System.out.println("> CRD: { name: " + crd.getMetadata().getName() + " ,kind: " + crd.getKind() + ", apiVersion:" + crd.getApiVersion() + " }"));
-//
-//        System.out.println(" -------------------------- ");
-//
-//        VirtualServiceList virtualServiceList = istioClient.virtualService().list();
-//        virtualServiceList.getItems().forEach((vs) -> System.out.println("> VS: { name: " + vs.getMetadata().getName() + ", kind: " + vs.getKind() + " }"));
-//
-//
-//        System.out.println(" -------------------------- ");
-//
-//        PolicyList policyList = istioClient.policy().list();
-//        policyList.getItems().forEach((p) -> System.out.println(" Policy: { name: " + p.getMetadata().getName() + ", kind: " + p.getKind() + " }"));
-//
-//
-//        System.out.println(" -------------------------- ");
-
-//    List<String> services = discoveryClient.getServices();
-//        for (String s : services) {
-//        System.out.println("Calling: http://" + s + ".knativetutorial.svc.cluster.local");
-//        WebClient webClient = WebClient.builder().baseUrl("http://" + s + ".knativetutorial.svc.cluster.local").build();
-//        webClient.get().uri("/").retrieve()
-//                .bodyToMono(String.class).subscribe(System.out::print);
-//
-//    }
 
 }
