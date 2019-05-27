@@ -1,8 +1,5 @@
 package org.salaboy.k8s.operator;
 
-import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.api.model.ServiceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.salaboy.k8s.operator.app.AppService;
 import org.salaboy.k8s.operator.crds.app.*;
@@ -88,7 +85,7 @@ public class OperatorRoutesLocator implements RouteDefinitionLocator {
     //@TODO: improve routes and modules validation
     private boolean areApplicationRoutesReady(Application app, List<RouteDefinition> appRouteDefinitions) {
         final AtomicInteger validated = new AtomicInteger();
-        if (appService.isAppUp(app)) { // ALL the modules are present
+        if (appService.isAppHealthy(app)) { // ALL the modules are present
             logger.info("> App: " + app.getMetadata().getName() + " validation!");
             Set<ModuleDescr> modules = app.getSpec().getModules();
             if (modules != null) {

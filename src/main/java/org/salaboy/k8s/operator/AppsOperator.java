@@ -83,9 +83,9 @@ public class AppsOperator {
                 return true;
             } else {
                 logger.error("> Custom CRDs required to work not found please check your installation!");
-                logger.error("\t > App CRD: " + applicationCRD);
-                logger.error("\t > ServiceA CRD: " + serviceACRD);
-                logger.error("\t > ServiceB CRD: " + serviceBCRD);
+                logger.error("\t > App CRD: " + applicationCRD.getMetadata().getName());
+                logger.error("\t > ServiceA CRD: " + serviceACRD.getMetadata().getName());
+                logger.error("\t > ServiceB CRD: " + serviceBCRD.getMetadata().getName());
                 return false;
             }
         } catch (Exception e) {
@@ -140,7 +140,7 @@ public class AppsOperator {
         if (!applicationWatchRegistered) {
             registerApplicationWatch();
         }
-        if (checkAllCRDsWatchRegistered()) {
+        if (areAllCRDWatchesRegistered()) {
             logger.info("> All CRDs Found, init complete");
             return true;
         } else {
@@ -192,8 +192,8 @@ public class AppsOperator {
     /*
      * Check that all the CRDs are being watched for changes
      */
-    private boolean checkAllCRDsWatchRegistered() {
-        if (applicationWatchRegistered && serviceAWatchRegistered) {
+    private boolean areAllCRDWatchesRegistered() {
+        if (applicationWatchRegistered && serviceAWatchRegistered && serviceBWatchRegistered) {
             return true;
         }
         return false;
@@ -208,9 +208,8 @@ public class AppsOperator {
         appCRDClient.withResourceVersion(appsResourceVersion).watch(new Watcher<Application>() {
             @Override
             public void eventReceived(Watcher.Action action, Application application) {
-                System.out.println("==> " + action + " for " + application);
                 if (action.equals(Action.ADDED)) {
-                    System.out.println(">> Adding a new App: " + application.getMetadata().getName());
+                    logger.info(">> Adding App: " + application.getMetadata().getName());
                     appService.addApp(application.getMetadata().getName(), application);
                     List<ServiceA> serviceAForAppList = serviceACRDClient.withLabel("app", application.getMetadata().getName()).list().getItems();
                     if (serviceAForAppList != null && !serviceAForAppList.isEmpty()) {
@@ -226,14 +225,14 @@ public class AppsOperator {
                     }
                 }
                 if (action.equals(Action.DELETED)) {
-                    System.out.println(">> Delete a new App");
+                    logger.info(">> Deleting App: " + application.getMetadata().getName());
                     appService.removeApp(application.getMetadata().getName());
                     //application.getMetadata().setOwnerReferences();
                     //@TODO: when creating services add OWNERReferences for GC
                 }
 
                 if (application.getSpec() == null) {
-                    System.out.println("No Spec for resource " + application);
+                    logger.info("No Spec for resource " + application.getMetadata().getName());
                 }
             }
 
@@ -298,7 +297,7 @@ public class AppsOperator {
             public void onClose(KubernetesClientException cause) {
             }
         });
-        serviceAWatchRegistered = true;
+        serviceBWatchRegistered = true;
     }
 
 
@@ -314,25 +313,26 @@ public class AppsOperator {
         appService.getAppsMap().keySet().forEach(appName ->
                 {
                     Application app = appService.getApp(appName);
-                    if (appService.isAppUp(app)) {
+                    logger.info("> Scanning App: " + appName + "...");
+                    if (appService.isAppHealthy(app)) {
                         logger.info("> App Name: " + appName + " is up and running");
                         app.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
                         app.getSpec().setStatus("HEALTHY");
                         String externalIp = k8SCoreRuntime.findGatewayExternalIP();
-                        appService.addAppUrl(app.getMetadata().getName(), "http://" + externalIp + "/apps/" + app.getMetadata().getName() + "/");
-
-                        app.getSpec().setUrl(appService.getAppUrl(appName));
-                        logger.info("> App Name: " + appName + " status is UP. \n" + app);
+                        String url = "http://" + externalIp + "/apps/" + app.getMetadata().getName() + "/";
+                        appService.addAppUrl(app.getMetadata().getName(), url);
+                        app.getSpec().setUrl(url);
+                        logger.info("> App: " + appName + ", status:  HEALTHY, URL: " + url + " \n");
                     } else {
                         logger.error("> App Name: " + appName + " is down due missing services");
                         if (app.getSpec().getModules() == null || app.getSpec().getModules().isEmpty()) {
-                            logger.info("App: " + appName + ": No Modules found. " + app);
+                            logger.info("App: " + appName + ": No Modules found. ");
                         } else {
                             app.getSpec().getModules().forEach(m -> logger.info("\t> Module found: " + m));
                         }
                         app.getSpec().setStatus("UNHEALTHY");
                         app.getSpec().setUrl("N/A");
-                        logger.info("> App Name: " + appName + " status is DOWN. \n " + app);
+                        logger.info("> App: " + appName + ", status: UNHEALTHY. \n ");
                     }
 
                     appCRDClient.createOrReplace(app);
