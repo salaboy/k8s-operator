@@ -15,6 +15,7 @@
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
         <spring-boot.version>2.1.2.RELEASE</spring-boot.version>
         <spring-cloud.version>Hoxton.BUILD-SNAPSHOT</spring-cloud.version>
+        <abstract-operator.version>0.5.2</abstract-operator.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -63,6 +64,11 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-kubernetes-istio</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.radanalytics</groupId>
+            <artifactId>abstract-operator</artifactId>
+            <version>${abstract-operator.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -94,6 +100,18 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
